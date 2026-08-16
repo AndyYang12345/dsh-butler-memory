@@ -12,10 +12,45 @@
  * The plugin is deliberately OPTIONAL: it declares no inject, so profiles
  * without the web stack (headless) still boot; the MCP tool row works
  * independently.
+ *
+ * The butler-memory skill is installed at RUNTIME (idempotent copy into
+ * $DSH_HOME/skills) instead of a postinstall script: pnpm blocks dependency
+ * build scripts by default and dsh treats that block as an install failure.
  */
+import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 export const name = 'dsh-butler-memory'
 
 export const inject = []
+
+function ensureSkillInstalled() {
+  try {
+    const source = fileURLToPath(
+      new URL('../skills/butler-memory/SKILL.md', import.meta.url),
+    )
+    const skillDir = join(
+      process.env.DSH_HOME || join(homedir(), '.dsh'),
+      'skills',
+      'butler-memory',
+    )
+    const target = join(skillDir, 'SKILL.md')
+    const upToDate =
+      existsSync(target) && readFileSync(target).equals(readFileSync(source))
+    if (!upToDate) {
+      mkdirSync(skillDir, { recursive: true })
+      copyFileSync(source, target)
+    }
+  } catch (cause) {
+    // Skill installation is an enhancement: never break the plugin over it.
+    console.warn(
+      '[dsh-butler-memory] could not install the butler-memory skill:',
+      cause instanceof Error ? cause.message : cause,
+    )
+  }
+}
 
 const PANEL_URL = () =>
   process.env.BUTLER_MEMORY_PANEL_URL ?? 'http://127.0.0.1:8771'
@@ -73,6 +108,7 @@ const ENDPOINTS = {
 }
 
 export function apply(ctx) {
+  ensureSkillInstalled()
   // Official pattern (verified in dsh-api-gateway): declare the dependency
   // with ctx.inject so the callback receives a context that resolves both
   // `connection` and the `webServer` the route registration needs. In
