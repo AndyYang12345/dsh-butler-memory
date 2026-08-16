@@ -3,6 +3,7 @@ node_modules/
 
 # Local configuration / secrets
 .env
+.npmrc
 
 # Editor
 .idea/
