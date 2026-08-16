@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        # esbuild's postinstall fetches the platform binary; our own
+        # postinstall (skill installer) is harmless on the runner.
+        run: npm ci
+
+      - name: Syntax checks
+        run: |
+          node --check host/index.js
+          node --check install-skill.mjs
+          node --check build.mjs
+
+      - name: Build client bundle
+        run: npm run build
+
+      - name: Verify bundle contract
+        run: |
+          test -s client/dist/client.js
+          grep -q '__ModuleLoader__.load' client/dist/client.js
+          node --check client/dist/client.js
+          node -e "const p = require('./package.json'); if (!p.dsh.bundle || !p.dsh.client) throw new Error('missing dsh manifest'); if (!p.exports['./package.json']) throw new Error('missing package.json export')"
+          echo "bundle and manifest OK"
+
+      - name: Skill installer smoke test
+        run: |
+          DST=$(mktemp -d)
+          DSH_HOME="$DST" node install-skill.mjs
+          test -s "$DST/skills/butler-memory/SKILL.md"
+          echo "skill install OK"
