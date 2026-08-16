@@ -136,11 +136,14 @@ function MemoryPanel({ onClose }) {
   const [includeArchived, setIncludeArchived] = (0, import_react.useState)(false);
   const [expanded, setExpanded] = (0, import_react.useState)(null);
   const [revisions, setRevisions] = (0, import_react.useState)(null);
+  const [healthy, setHealthy] = (0, import_react.useState)(null);
+  const [showGuide, setShowGuide] = (0, import_react.useState)(false);
   const [error, setError] = (0, import_react.useState)(null);
   const load = (0, import_react.useMemo)(
     () => () => {
       setError(null);
       Promise.all([
+        hostCall("memory/health", {}).catch(() => ({ ok: false })),
         hostCall("memory/list", { limit: 50, include_archived: includeArchived }).catch(
           (cause) => {
             throw cause;
@@ -149,10 +152,13 @@ function MemoryPanel({ onClose }) {
         hostCall("memory/candidates", { status: "pending", limit: 50 }).catch(
           () => ({ candidates: [] })
         )
-      ]).then(([memoryResult, candidateResult]) => {
+      ]).then(([healthResult, memoryResult, candidateResult]) => {
+        setHealthy(healthResult.ok);
         setMemories(memoryResult.memories ?? []);
         setCandidates(candidateResult.candidates ?? []);
       }).catch((cause) => {
+        setHealthy(false);
+        setShowGuide(true);
         setError(cause instanceof Error ? cause.message : String(cause));
       });
     },
@@ -214,6 +220,57 @@ function MemoryPanel({ onClose }) {
           `\u8BB0\u5FC6\u5019\u9009 (${candidates.length})`
         )
       ),
+      (0, import_react.createElement)(
+        "div",
+        { className: "bm-status-row" },
+        healthy === null ? (0, import_react.createElement)("span", { className: "bm-status bm-status--pending" }, "\u68C0\u67E5\u670D\u52A1\u2026") : healthy ? (0, import_react.createElement)(
+          "span",
+          { className: "bm-status bm-status--ok" },
+          "Butler \u8BB0\u5FC6\u670D\u52A1\u5728\u7EBF"
+        ) : (0, import_react.createElement)(
+          "span",
+          { className: "bm-status bm-status--down" },
+          "\u8BB0\u5FC6\u670D\u52A1\u79BB\u7EBF"
+        ),
+        healthy === false ? (0, import_react.createElement)(
+          "button",
+          {
+            type: "button",
+            className: "bm-action bm-action--guide",
+            onClick: () => setShowGuide((value) => !value)
+          },
+          showGuide ? "\u6536\u8D77\u5B89\u88C5\u6307\u5F15" : "\u67E5\u770B\u5B89\u88C5\u6307\u5F15"
+        ) : null
+      ),
+      showGuide && healthy === false ? (0, import_react.createElement)(
+        "div",
+        { className: "bm-guide" },
+        (0, import_react.createElement)("div", { className: "bm-guide__step" }, "1. \u5B89\u88C5\u5E76\u914D\u7F6E MCP \u670D\u52A1\u5668\uFF1A"),
+        (0, import_react.createElement)("code", { className: "bm-guide__code" }, "pip install butler-memory-mcp"),
+        (0, import_react.createElement)("div", { className: "bm-guide__step" }, "2. \u914D\u7F6E\u73AF\u5883\uFF08\u4E09\u9009\u4E00\u4F4D\u7F6E\u5747\u53EF\uFF09\uFF1A"),
+        (0, import_react.createElement)(
+          "code",
+          { className: "bm-guide__code" },
+          "cp .env.example ~/.config/butler-memory-mcp/.env  # \u586B DATABASE_URL / USER_ID / DEVICE_ID"
+        ),
+        (0, import_react.createElement)("div", { className: "bm-guide__step" }, "3. \u6CE8\u518C\u6865\u8BBE\u5907\uFF08\u53EA\u9700\u4E00\u6B21\uFF09\uFF1A"),
+        (0, import_react.createElement)(
+          "code",
+          { className: "bm-guide__code" },
+          "ai-butler-admin add-device --user-id <USER_UUID> --device-name dsh-agent --device-kind agent --scope memory:read --scope memory:write"
+        ),
+        (0, import_react.createElement)("div", { className: "bm-guide__step" }, "4. \u542F\u52A8\u9762\u677F\u670D\u52A1\uFF1A"),
+        (0, import_react.createElement)(
+          "code",
+          { className: "bm-guide__code" },
+          "ai-butler-memory-mcp --transport http"
+        ),
+        (0, import_react.createElement)(
+          "div",
+          { className: "bm-guide__note" },
+          "\u672C\u9762\u677F\u4E0D\u4F1A\u4EE3\u4F60\u6267\u884C\u5B89\u88C5\u6216\u4FEE\u6539\u914D\u7F6E\u2014\u2014Secret \u4E0E\u8BBE\u5907\u6CE8\u518C\u5F52\u4F60\u6240\u6709\u3002"
+        )
+      ) : null,
       error ? (0, import_react.createElement)("div", { className: "bm-error" }, error) : null,
       view === "memories" ? (0, import_react.createElement)(
         "div",
@@ -420,6 +477,23 @@ function installStyles() {
     .bm-revision__body{flex:1;color:var(--dsw-alias-label-secondary,#c9cad0);white-space:normal;}
     .bm-revision__meta{flex:none;color:var(--dsw-alias-label-caption,#8b8d94);font-size:10px;
       font-family:var(--dsw-font-mono,ui-monospace,monospace);white-space:normal;}
+    .bm-status-row{display:flex;align-items:center;gap:10px;margin:0 16px 10px;}
+    .bm-status{font-size:12px;display:inline-flex;align-items:center;gap:6px;}
+    .bm-status::before{content:"";width:7px;height:7px;border-radius:50%;display:inline-block;}
+    .bm-status--pending::before{background:var(--dsw-alias-label-tertiary,#9a9ba1);}
+    .bm-status--ok{color:var(--dsw-alias-label-secondary,#c9cad0);}
+    .bm-status--ok::before{background:#4cc38a;}
+    .bm-status--down{color:var(--dsw-alias-label-secondary,#c9cad0);}
+    .bm-status--down::before{background:#e8605c;}
+    .bm-action--guide{font-size:11px;padding:2px 10px;}
+    .bm-guide{margin:0 16px 10px;border:1px solid var(--dsw-alias-border-l2,#33353a);
+      border-radius:8px;padding:10px 12px;background:var(--dsw-alias-bg-layer-1,transparent);
+      display:flex;flex-direction:column;gap:6px;}
+    .bm-guide__step{color:var(--dsw-alias-label-secondary,#c9cad0);font-size:12px;}
+    .bm-guide__code{display:block;color:var(--dsw-alias-label-primary,#e8e8ea);font-size:11px;
+      font-family:var(--dsw-font-mono,ui-monospace,monospace);background:var(--dsw-alias-bg-layer-2,rgba(255,255,255,.06));
+      border-radius:6px;padding:6px 8px;white-space:pre-wrap;word-break:break-all;}
+    .bm-guide__note{color:var(--dsw-alias-label-caption,#8b8d94);font-size:11px;}
     .bm-footer{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;
       border-top:1px solid var(--dsw-alias-border-l2,#33353a);}
     .bm-note{color:var(--dsw-alias-label-caption,#8b8d94);font-size:11px;}

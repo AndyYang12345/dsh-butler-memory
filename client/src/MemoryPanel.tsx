@@ -141,12 +141,15 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
   const [includeArchived, setIncludeArchived] = useState(false)
   const [expanded, setExpanded] = useState<MemoryRecord | null>(null)
   const [revisions, setRevisions] = useState<RevisionRecord[] | null>(null)
+  const [healthy, setHealthy] = useState<boolean | null>(null)
+  const [showGuide, setShowGuide] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const load = useMemo(
     () => () => {
       setError(null)
       Promise.all([
+        hostCall('memory/health', {}).catch(() => ({ ok: false })),
         hostCall('memory/list', { limit: 50, include_archived: includeArchived }).catch(
           (cause) => {
             throw cause
@@ -156,11 +159,14 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
           () => ({ candidates: [] }),
         ),
       ])
-        .then(([memoryResult, candidateResult]) => {
+        .then(([healthResult, memoryResult, candidateResult]) => {
+          setHealthy((healthResult as { ok: boolean }).ok)
           setMemories((memoryResult as { memories: MemoryRecord[] }).memories ?? [])
           setCandidates((candidateResult as { candidates: CandidateRecord[] }).candidates ?? [])
         })
         .catch((cause: unknown) => {
+          setHealthy(false)
+          setShowGuide(true)
           setError(cause instanceof Error ? cause.message : String(cause))
         })
     },
@@ -230,6 +236,65 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
           `记忆候选 (${candidates.length})`,
         ),
       ),
+      createElement(
+        'div',
+        { className: 'bm-status-row' },
+        healthy === null
+          ? createElement('span', { className: 'bm-status bm-status--pending' }, '检查服务…')
+          : healthy
+            ? createElement(
+                'span',
+                { className: 'bm-status bm-status--ok' },
+                'Butler 记忆服务在线',
+              )
+            : createElement(
+                'span',
+                { className: 'bm-status bm-status--down' },
+                '记忆服务离线',
+              ),
+        healthy === false
+          ? createElement(
+              'button',
+              {
+                type: 'button',
+                className: 'bm-action bm-action--guide',
+                onClick: () => setShowGuide((value) => !value),
+              },
+              showGuide ? '收起安装指引' : '查看安装指引',
+            )
+          : null,
+      ),
+      showGuide && healthy === false
+        ? createElement(
+            'div',
+            { className: 'bm-guide' },
+            createElement('div', { className: 'bm-guide__step' }, '1. 安装并配置 MCP 服务器：'),
+            createElement('code', { className: 'bm-guide__code' }, 'pip install butler-memory-mcp'),
+            createElement('div', { className: 'bm-guide__step' }, '2. 配置环境（三选一位置均可）：'),
+            createElement(
+              'code',
+              { className: 'bm-guide__code' },
+              'cp .env.example ~/.config/butler-memory-mcp/.env  # 填 DATABASE_URL / USER_ID / DEVICE_ID',
+            ),
+            createElement('div', { className: 'bm-guide__step' }, '3. 注册桥设备（只需一次）：'),
+            createElement(
+              'code',
+              { className: 'bm-guide__code' },
+              'ai-butler-admin add-device --user-id <USER_UUID> --device-name dsh-agent --device-kind agent --scope memory:read --scope memory:write',
+            ),
+            createElement('div', { className: 'bm-guide__step' }, '4. 启动面板服务：'),
+            createElement(
+              'code',
+              { className: 'bm-guide__code' },
+              'ai-butler-memory-mcp --transport http',
+            ),
+            createElement(
+              'div',
+              { className: 'bm-guide__note' },
+              '本面板不会代你执行安装或修改配置——Secret 与设备注册归你所有。',
+            ),
+          )
+        : null,
       error ? createElement('div', { className: 'bm-error' }, error) : null,
       view === 'memories'
         ? createElement(

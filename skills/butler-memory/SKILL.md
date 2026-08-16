@@ -41,3 +41,27 @@ Butler 记忆是**用户拥有的持久长期记忆**，存储在本地 PostgreS
 - `resource_not_found`：记忆可能已被归档，重新 list/search；
 - `memory_access_denied`：桥设备缺少 scope，提示部署者检查
   `ai-butler-admin grant-scopes`。
+
+## 部署检查（工具不可用 / 调用报错时按序排查）
+
+1. **工具未注册**（`mcp__butler__memory_*` 不存在）：
+   确认 `dsh plugin add dsh-butler-memory` 已执行、`ai-butler-memory-mcp`
+   命令在 PATH 上（`pip install butler-memory-mcp`）。
+2. **连接失败 / 子进程退出**：
+   - stdio 模式由 DSH 自动启动，检查 `~/.config/butler-memory-mcp/.env`
+     是否已配置 `AI_BUTLER_DATABASE_URL`、`AI_BUTLER_MCP_USER_ID`、
+     `AI_BUTLER_MCP_DEVICE_ID`（缺失时服务器启动即退）；
+   - 面板模式还需单独运行 `ai-butler-memory-mcp --transport http`
+     （默认 `127.0.0.1:8771`）。
+3. **403 / memory_access_denied**：桥设备未注册或 scope 不足，按以下方式
+   补注册（只需一次）：
+   ```bash
+   ai-butler-admin add-device --user-id <USER_UUID> \
+     --device-name dsh-agent --device-kind agent \
+     --scope memory:read --scope memory:write
+   # 把输出的 device_id 填进 .env 的 AI_BUTLER_MCP_DEVICE_ID
+   ```
+4. **数据库不可达**：确认 PostgreSQL 运行且已迁移
+   （`ai-butler-db upgrade`）。
+
+指导用户时把命令原样给出，不要代为执行安装或修改 `.env`（Secret 归用户）。

@@ -50,6 +50,10 @@ function queryString(params) {
 }
 
 const ENDPOINTS = {
+  'memory/health': () =>
+    fetch(`${PANEL_URL()}/health/live`, { method: 'GET' })
+      .then((response) => (response.ok ? { ok: true } : { ok: false }))
+      .catch(() => ({ ok: false })),
   'memory/list': (payload = {}) =>
     panelRequest(`/v1/memories${queryString(payload)}`),
   'memory/search': (payload = {}) =>
