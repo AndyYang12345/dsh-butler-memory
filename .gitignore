@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+
+# Local configuration / secrets
+.env
+
+# Editor
+.idea/
+.vscode/
+*.log

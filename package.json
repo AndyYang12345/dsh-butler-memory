@@ -1,0 +1,35 @@
+{
+  "name": "dsh-butler-memory",
+  "version": "0.1.0",
+  "description": "DSH bundle: wire the Butler Memory MCP server (agent tools) and add a Web memory panel (view/search/candidates)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "host/index.js",
+  "exports": {
+    ".": "./host/index.js",
+    "./client": "./client/dist/client.js"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "host",
+    "client/dist",
+    "skills",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "immediately": true }
+  },
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "@deepseek-ai/dsh-client-runtime": ">=0.1.0-rc.6",
+    "@deepseek-ai/dsh-client-ui-slots": ">=0.1.0-rc.6",
+    "@deepseek-ai/dsh-client-ui-conversation": ">=0.1.0-rc.6"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}
