@@ -17,6 +17,7 @@
     "host",
     "client/dist",
     "skills",
+    "install-skill.mjs",
     "README.md"
   ],
   "dsh": {
@@ -24,7 +25,9 @@
     "client": { "platform": "web", "immediately": true }
   },
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "install-skill": "node install-skill.mjs",
+    "postinstall": "node install-skill.mjs"
   },
   "dependencies": {
     "react": "^18.2.0"

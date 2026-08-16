@@ -64,6 +64,9 @@ var SENSITIVITY_LABELS = {
 function badge(label, tone) {
   return (0, import_react.createElement)("span", { className: `bm-badge bm-badge--${tone}` }, label);
 }
+function shortId(value) {
+  return value.slice(0, 8);
+}
 function MemoryRow({ memory, onOpen }) {
   return (0, import_react.createElement)(
     "div",
@@ -82,7 +85,7 @@ function MemoryRow({ memory, onOpen }) {
       (0, import_react.createElement)(
         "div",
         { className: "bm-item__meta" },
-        `revision ${memory.revision} \xB7 \u66F4\u65B0 ${memory.updated_at.slice(0, 16).replace("T", " ")}`
+        `#${memory.memory_id.slice(0, 8)} \xB7 revision ${memory.revision} \xB7 \u66F4\u65B0 ${memory.updated_at.slice(0, 16).replace("T", " ")}`
       )
     )
   );
@@ -130,15 +133,19 @@ function MemoryPanel({ onClose }) {
   const [view, setView] = (0, import_react.useState)("memories");
   const [memories, setMemories] = (0, import_react.useState)([]);
   const [candidates, setCandidates] = (0, import_react.useState)([]);
+  const [includeArchived, setIncludeArchived] = (0, import_react.useState)(false);
   const [expanded, setExpanded] = (0, import_react.useState)(null);
+  const [revisions, setRevisions] = (0, import_react.useState)(null);
   const [error, setError] = (0, import_react.useState)(null);
   const load = (0, import_react.useMemo)(
     () => () => {
       setError(null);
       Promise.all([
-        hostCall("memory/list", { limit: 50 }).catch((cause) => {
-          throw cause;
-        }),
+        hostCall("memory/list", { limit: 50, include_archived: includeArchived }).catch(
+          (cause) => {
+            throw cause;
+          }
+        ),
         hostCall("memory/candidates", { status: "pending", limit: 50 }).catch(
           () => ({ candidates: [] })
         )
@@ -149,11 +156,20 @@ function MemoryPanel({ onClose }) {
         setError(cause instanceof Error ? cause.message : String(cause));
       });
     },
-    []
+    [includeArchived]
   );
   (0, import_react.useEffect)(() => {
     load();
   }, [load]);
+  function openDetail(memory) {
+    setExpanded(memory);
+    setRevisions(null);
+    hostCall("memory/revisions", { memoryId: memory.memory_id }).then((result) => {
+      setRevisions(result.revisions ?? []);
+    }).catch((cause) => {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    });
+  }
   function decide(candidateId, accept) {
     const endpoint = accept ? "memory/candidates/accept" : "memory/candidates/reject";
     hostCall(endpoint, { candidateId }).then(() => load()).catch((cause) => {
@@ -202,20 +218,64 @@ function MemoryPanel({ onClose }) {
       view === "memories" ? (0, import_react.createElement)(
         "div",
         { className: "bm-scroll" },
+        (0, import_react.createElement)(
+          "label",
+          { className: "bm-toggle" },
+          (0, import_react.createElement)("input", {
+            type: "checkbox",
+            checked: includeArchived,
+            onChange: (event) => setIncludeArchived(event.target.checked)
+          }),
+          "\u663E\u793A\u5DF2\u5F52\u6863"
+        ),
         memories.length === 0 ? (0, import_react.createElement)("p", { className: "bm-empty" }, "\u5C1A\u672A\u8BFB\u53D6\u8BB0\u5FC6\u3002") : memories.map(
           (memory) => (0, import_react.createElement)(MemoryRow, {
             key: memory.memory_id,
             memory,
-            onOpen: () => setExpanded(memory)
+            onOpen: () => openDetail(memory)
           })
         ),
         expanded ? (0, import_react.createElement)(
           "div",
           { className: "bm-detail" },
+          (0, import_react.createElement)(
+            "div",
+            { className: "bm-detail__meta" },
+            `#${shortId(expanded.memory_id)} \xB7 revision ${expanded.revision} \xB7 ${SENSITIVITY_LABELS[expanded.sensitivity] ?? expanded.sensitivity}`
+          ),
           (0, import_react.createElement)("p", null, expanded.content),
+          (0, import_react.createElement)("div", { className: "bm-detail__sub" }, "\u4FEE\u8BA2\u5386\u53F2"),
+          revisions === null ? (0, import_react.createElement)("div", { className: "bm-item__meta" }, "\u8BFB\u53D6\u4E2D\u2026") : revisions.map(
+            (revision) => (0, import_react.createElement)(
+              "div",
+              { key: revision.revision, className: "bm-revision" },
+              (0, import_react.createElement)(
+                "span",
+                { className: "bm-revision__badge" },
+                `r${revision.revision}`
+              ),
+              (0, import_react.createElement)(
+                "span",
+                { className: "bm-revision__body" },
+                revision.reason
+              ),
+              (0, import_react.createElement)(
+                "span",
+                { className: "bm-revision__meta" },
+                `${revision.created_at.slice(0, 16).replace("T", " ")} \xB7 ${revision.actor_device_id ? `\u8BBE\u5907 ${shortId(revision.actor_device_id)}` : "\u7CFB\u7EDF"}`
+              )
+            )
+          ),
           (0, import_react.createElement)(
             "button",
-            { type: "button", className: "bm-action", onClick: () => setExpanded(null) },
+            {
+              type: "button",
+              className: "bm-action",
+              onClick: () => {
+                setExpanded(null);
+                setRevisions(null);
+              }
+            },
             "\u6536\u8D77"
           )
         ) : null
@@ -343,9 +403,23 @@ function installStyles() {
       background:var(--dsw-alias-interactive-bg-hover-danger,rgba(232,93,84,.16));
       border:1px solid rgba(232,93,84,.35);padding:8px 12px;margin:0 16px 10px;}
     .bm-empty{color:var(--dsw-alias-label-tertiary,#9a9ba1);text-align:center;margin:20px 0;font-size:12px;}
+    .bm-toggle{display:flex;align-items:center;gap:6px;color:var(--dsw-alias-label-secondary,#c9cad0);
+      font-size:12px;cursor:pointer;padding:4px 2px;user-select:none;}
+    .bm-toggle input{accent-color:var(--dsw-alias-brand-primary,#4f7cff);}
     .bm-detail{margin-top:8px;background:var(--dsw-alias-bg-layer-2,rgba(255,255,255,.06));
       border-radius:8px;padding:10px 12px;color:var(--dsw-alias-label-secondary,#c9cad0);
       white-space:pre-wrap;font-size:12px;line-height:1.6;}
+    .bm-detail__meta{color:var(--dsw-alias-label-caption,#8b8d94);font-size:11px;
+      font-family:var(--dsw-font-mono,ui-monospace,monospace);margin-bottom:6px;white-space:normal;}
+    .bm-detail__sub{color:var(--dsw-alias-label-tertiary,#9a9ba1);font-size:11px;
+      margin:10px 0 6px;white-space:normal;}
+    .bm-revision{display:flex;gap:8px;align-items:baseline;padding:4px 0;white-space:normal;
+      border-top:1px dashed var(--dsw-alias-border-l2,#33353a);}
+    .bm-revision__badge{flex:none;color:var(--dsw-alias-brand-text,#8ab4ff);
+      font-family:var(--dsw-font-mono,ui-monospace,monospace);font-size:11px;}
+    .bm-revision__body{flex:1;color:var(--dsw-alias-label-secondary,#c9cad0);white-space:normal;}
+    .bm-revision__meta{flex:none;color:var(--dsw-alias-label-caption,#8b8d94);font-size:10px;
+      font-family:var(--dsw-font-mono,ui-monospace,monospace);white-space:normal;}
     .bm-footer{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;
       border-top:1px solid var(--dsw-alias-border-l2,#33353a);}
     .bm-note{color:var(--dsw-alias-label-caption,#8b8d94);font-size:11px;}
