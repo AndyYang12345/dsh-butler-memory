@@ -24,16 +24,29 @@ DSH web 面板 ──host.call──► host 半部 ──HTTP──► butler-m
 
 ## 前置条件
 
-1. 已安装并运行 [butler-memory-mcp](https://github.com/AndyYang12345/butler-memory-mcp)（stdio 由 DSH 自动
-   spawn；HTTP 面板模式需单独 `--transport http` 运行）；
+1. 已安装 [butler-memory-mcp](https://github.com/AndyYang12345/butler-memory-mcp)
+   （`pip install butler-memory-mcp`；stdio 由 DSH 自动 spawn，HTTP 面板模式需
+   单独 `--transport http` 运行，默认 `127.0.0.1:8771`）；
 2. Node 22+；`dsh` CLI 已安装。
 
 ## 安装
 
+### 从 npm（发布后推荐）
+
+```bash
+dsh plugin add dsh-butler-memory
+```
+
+安装时 postinstall 会把 `butler-memory` skill 复制到
+`$DSH_HOME/skills/butler-memory/`，DSH 的文件系统 skill 提供方会在所有
+profile 中发现它；也可手动执行 `npm run install-skill` 重装。
+
+### 本地开发（源码 checkout）
+
 ```bash
 npm install
-npm run build                # 必须先构建 client/dist/client.js
-dsh plugin add ..            # 从本仓库本地安装（或发布 npm 后按包名安装）
+npm run build                # 构建 client/dist/client.js
+dsh plugin add ..            # 本地路径安装到当前 profile
 ```
 
 发布形态：`package.json` 同时声明 `dsh.bundle`（贡献 `cordis.patch.yml` 层）与
