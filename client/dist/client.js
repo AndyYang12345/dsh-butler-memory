@@ -201,7 +201,7 @@ function MemoryPanel({ onClose }) {
       error ? (0, import_react.createElement)("div", { className: "bm-error" }, error) : null,
       view === "memories" ? (0, import_react.createElement)(
         "div",
-        { className: "bm-list" },
+        { className: "bm-scroll" },
         memories.length === 0 ? (0, import_react.createElement)("p", { className: "bm-empty" }, "\u5C1A\u672A\u8BFB\u53D6\u8BB0\u5FC6\u3002") : memories.map(
           (memory) => (0, import_react.createElement)(MemoryRow, {
             key: memory.memory_id,
@@ -221,7 +221,7 @@ function MemoryPanel({ onClose }) {
         ) : null
       ) : (0, import_react.createElement)(
         "div",
-        { className: "bm-list" },
+        { className: "bm-scroll" },
         candidates.length === 0 ? (0, import_react.createElement)(
           "p",
           { className: "bm-empty" },
@@ -260,6 +260,7 @@ function MemoryButton() {
       "button",
       {
         type: "button",
+        className: "bm-trigger",
         title: "\u67E5\u770B\u957F\u671F\u8BB0\u5FC6",
         onClick: () => setOpen((value) => !value)
       },
@@ -290,34 +291,64 @@ function installStyles() {
   const style = document.createElement("style");
   style.id = "bm-memory-styles";
   style.textContent = `
-    .bm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;
+    .bm-trigger{min-height:28px;padding:0 8px;border:0;background:0;border-radius:6px;
+      color:var(--dsw-alias-label-tertiary,#9a9ba1);font-size:13px;line-height:28px;cursor:pointer;}
+    .bm-trigger:hover{color:var(--dsw-alias-label-secondary,#c9cad0);
+      background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.08));}
+    .bm-overlay{position:fixed;inset:0;background:var(--dsw-alias-bg-mask-1,rgba(0,0,0,.55));display:flex;
       align-items:flex-start;justify-content:flex-end;z-index:1000;padding:48px 24px 24px;}
-    .bm-panel{width:420px;max-width:100%;max-height:80vh;overflow:auto;background:var(--ds-surface,#fff);
-      border:1px solid var(--ds-border,#ddd);border-radius:10px;padding:14px 16px;font-size:13px;}
-    .bm-panel__header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-    .bm-close{border:none;background:none;font-size:20px;cursor:pointer;}
-    .bm-tabs{display:flex;gap:8px;margin-bottom:10px;}
-    .bm-tab{border:1px solid var(--ds-border,#ddd);background:none;border-radius:6px;padding:4px 10px;cursor:pointer;}
-    .bm-tab--active{background:var(--ds-accent,#e8f0fe);border-color:var(--ds-accent,#4a90d9);}
-    .bm-list{display:flex;flex-direction:column;gap:6px;}
-    .bm-item{border:1px solid var(--ds-border,#e2e2e2);border-radius:8px;padding:8px 10px;}
-    .bm-item__main{border:none;background:none;text-align:left;cursor:pointer;width:100%;padding:0;}
-    .bm-item__title{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-weight:600;}
-    .bm-item__meta{color:#777;font-size:11px;margin-top:4px;}
-    .bm-item__actions{display:flex;gap:8px;margin-top:6px;}
-    .bm-badge{border-radius:999px;padding:1px 8px;font-size:10px;font-weight:500;}
-    .bm-badge--kind{background:#eef1f6;color:#4b5563;}
-    .bm-badge--sensitivity{background:#fdf2e9;color:#b45309;}
-    .bm-badge--candidate{background:#fef9c3;color:#854d0e;}
-    .bm-badge--archived{background:#f3f4f6;color:#6b7280;}
-    .bm-action{border:1px solid var(--ds-border,#ddd);background:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:12px;}
-    .bm-action--accept{background:#e6f6ec;border-color:#34a853;}
-    .bm-action--reject{background:#fdecea;border-color:#ea4335;}
-    .bm-error{color:#b42318;background:#fdecea;border-radius:6px;padding:6px 10px;margin-bottom:8px;}
-    .bm-empty{color:#888;margin:12px 0;}
-    .bm-detail{background:var(--ds-surface-2,#fafafa);border-radius:8px;padding:8px 10px;margin-top:8px;}
-    .bm-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
-    .bm-note{color:#999;font-size:11px;}
+    .bm-panel{width:400px;max-width:100%;max-height:78vh;display:flex;flex-direction:column;
+      overflow:hidden;border-radius:12px;border:1px solid var(--dsw-alias-border-l2,#33353a);
+      background:var(--dsw-specific-menu,var(--dsw-alias-bg-overlay,#1f2023));
+      color:var(--dsw-alias-label-primary,#e8e8ea);font-size:13px;
+      box-shadow:0 12px 32px rgba(0,0,0,.4);}
+    .bm-panel__header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;}
+    .bm-panel__header h2{margin:0;font-size:15px;font-weight:600;
+      color:var(--dsw-alias-label-primary,#e8e8ea);}
+    .bm-close{border:none;background:none;color:var(--dsw-alias-label-tertiary,#9a9ba1);
+      font-size:20px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:6px;}
+    .bm-close:hover{color:var(--dsw-alias-label-primary,#e8e8ea);
+      background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.08));}
+    .bm-tabs{display:flex;gap:4px;margin:0 16px 10px;
+      border-bottom:1px solid var(--dsw-alias-border-l2,#33353a);}
+    .bm-tab{border:none;background:none;color:var(--dsw-alias-label-tertiary,#9a9ba1);
+      padding:6px 12px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
+    .bm-tab:hover{color:var(--dsw-alias-label-secondary,#c9cad0);}
+    .bm-tab--active{color:var(--dsw-alias-label-primary,#e8e8ea);font-weight:500;
+      border-bottom-color:var(--dsw-alias-brand-primary,#4f7cff);}
+    .bm-scroll{overflow-y:auto;padding:0 16px 12px;display:flex;flex-direction:column;gap:8px;}
+    .bm-item{border:1px solid var(--dsw-alias-border-l2,#33353a);border-radius:8px;padding:10px 12px;
+      background:var(--dsw-alias-bg-layer-1,transparent);}
+    .bm-item:hover{border-color:var(--dsw-alias-border-l3,#4a4c53);}
+    .bm-item__main{border:none;background:none;text-align:left;cursor:pointer;width:100%;padding:0;
+      color:inherit;font:inherit;}
+    .bm-item__title{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-weight:500;
+      color:var(--dsw-alias-label-primary,#e8e8ea);}
+    .bm-item__meta{color:var(--dsw-alias-label-caption,#8b8d94);font-size:11px;margin-top:5px;
+      font-family:var(--dsw-font-mono,ui-monospace,monospace);}
+    .bm-item__actions{display:flex;gap:8px;margin-top:8px;}
+    .bm-badge{border-radius:999px;padding:1px 8px;font-size:11px;line-height:16px;
+      color:var(--dsw-alias-label-secondary,#c9cad0);
+      background:var(--dsw-alias-bg-layer-2,rgba(255,255,255,.06));
+      border:1px solid var(--dsw-alias-border-l2,#33353a);}
+    .bm-badge--archived{color:var(--dsw-alias-label-tertiary,#9a9ba1);}
+    .bm-action{border:1px solid var(--dsw-alias-border-l2,#33353a);border-radius:6px;
+      background:var(--dsw-alias-button-tool-bar-fill,transparent);
+      color:var(--dsw-alias-label-primary,#e8e8ea);padding:4px 12px;cursor:pointer;font-size:12px;}
+    .bm-action:hover{background:var(--dsw-alias-button-tool-bar-hover,rgba(255,255,255,.08));}
+    .bm-action--accept{color:var(--dsw-alias-brand-text,#8ab4ff);}
+    .bm-action--accept:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.08));}
+    .bm-action--reject:hover{background:var(--dsw-alias-interactive-bg-hover-danger,rgba(232,93,84,.16));}
+    .bm-error{color:var(--dsw-alias-label-primary,#e8e8ea);font-size:12px;border-radius:8px;
+      background:var(--dsw-alias-interactive-bg-hover-danger,rgba(232,93,84,.16));
+      border:1px solid rgba(232,93,84,.35);padding:8px 12px;margin:0 16px 10px;}
+    .bm-empty{color:var(--dsw-alias-label-tertiary,#9a9ba1);text-align:center;margin:20px 0;font-size:12px;}
+    .bm-detail{margin-top:8px;background:var(--dsw-alias-bg-layer-2,rgba(255,255,255,.06));
+      border-radius:8px;padding:10px 12px;color:var(--dsw-alias-label-secondary,#c9cad0);
+      white-space:pre-wrap;font-size:12px;line-height:1.6;}
+    .bm-footer{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;
+      border-top:1px solid var(--dsw-alias-border-l2,#33353a);}
+    .bm-note{color:var(--dsw-alias-label-caption,#8b8d94);font-size:11px;}
   `;
   document.head.append(style);
 }

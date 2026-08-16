@@ -205,7 +205,7 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
       view === 'memories'
         ? createElement(
             'div',
-            { className: 'bm-list' },
+            { className: 'bm-scroll' },
             memories.length === 0
               ? createElement('p', { className: 'bm-empty' }, '尚未读取记忆。')
               : memories.map((memory) =>
@@ -230,7 +230,7 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
           )
         : createElement(
             'div',
-            { className: 'bm-list' },
+            { className: 'bm-scroll' },
             candidates.length === 0
               ? createElement(
                   'p',
