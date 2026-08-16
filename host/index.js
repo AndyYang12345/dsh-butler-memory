@@ -69,41 +69,38 @@ const ENDPOINTS = {
 }
 
 export function apply(ctx) {
-  let connection
-  try {
-    connection = ctx.get('connection')
-  } catch {
-    connection = undefined
-  }
-  if (connection === undefined || connection.rpc === undefined) {
-    // Headless / non-web profiles: the panel bridge is simply absent.
-    return
-  }
-  connection.rpc.handle(
-    '/butler-memory',
-    async (endpoint, payload) => {
-      const handler = ENDPOINTS[endpoint]
-      if (handler === undefined) {
-        return {
-          ok: false,
-          error: {
-            code: 'internal',
-            message: `unknown butler-memory endpoint: ${endpoint}`,
-            details: {},
-          },
+  // Official pattern (verified in dsh-api-gateway): declare the dependency
+  // with ctx.inject so the callback receives a context that resolves both
+  // `connection` and the `webServer` the route registration needs. In
+  // profiles without the web stack the callback simply never runs, which is
+  // the intended optional behavior.
+  ctx.inject(['connection'], (connectionCtx) => {
+    connectionCtx.connection.rpc.handle(
+      '/butler-memory',
+      async (endpoint, payload) => {
+        const handler = ENDPOINTS[endpoint]
+        if (handler === undefined) {
+          return {
+            ok: false,
+            error: {
+              code: 'internal',
+              message: `unknown butler-memory endpoint: ${endpoint}`,
+              details: {},
+            },
+          }
         }
-      }
-      try {
-        return { ok: true, value: await handler(payload ?? {}) }
-      } catch (cause) {
-        const message =
-          cause instanceof Error ? cause.message : String(cause ?? 'panel error')
-        return {
-          ok: false,
-          error: { code: 'internal', message, details: {} },
+        try {
+          return { ok: true, value: await handler(payload ?? {}) }
+        } catch (cause) {
+          const message =
+            cause instanceof Error ? cause.message : String(cause ?? 'panel error')
+          return {
+            ok: false,
+            error: { code: 'internal', message, details: {} },
+          }
         }
-      }
-    },
-    { authority: 'loopback' },
-  )
+      },
+      { authority: 'loopback' },
+    )
+  })
 }
