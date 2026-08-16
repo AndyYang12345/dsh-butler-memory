@@ -7,7 +7,10 @@
   "main": "host/index.js",
   "exports": {
     ".": "./host/index.js",
-    "./client": "./client/dist/client.js"
+    "./client": {
+      "default": "./client/dist/client.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "cordis.patch.yml",

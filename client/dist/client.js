@@ -1,8 +1,34 @@
+window.__ModuleLoader__.load({ id: "dsh-butler-memory", factory: function (require) { var module = { exports: {} }; var exports = module.exports; Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name2 in all)
+    __defProp(target, name2, { get: all[name2], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
 // client/src/index.tsx
-import { createElement as createElement2, useState as useState2 } from "react";
+var index_exports = {};
+__export(index_exports, {
+  apply: () => apply,
+  inject: () => inject,
+  name: () => name
+});
+module.exports = __toCommonJS(index_exports);
+var import_react2 = require("react");
 
 // client/src/MemoryPanel.tsx
-import { createElement, useEffect, useMemo, useState } from "react";
+var import_react = require("react");
 
 // client/src/hostClient.ts
 var rpc = null;
@@ -36,16 +62,16 @@ var SENSITIVITY_LABELS = {
   secret: "\u673A\u5BC6"
 };
 function badge(label, tone) {
-  return createElement("span", { className: `bm-badge bm-badge--${tone}` }, label);
+  return (0, import_react.createElement)("span", { className: `bm-badge bm-badge--${tone}` }, label);
 }
 function MemoryRow({ memory, onOpen }) {
-  return createElement(
+  return (0, import_react.createElement)(
     "div",
     { className: "bm-item" },
-    createElement(
+    (0, import_react.createElement)(
       "button",
       { type: "button", className: "bm-item__main", onClick: onOpen },
-      createElement(
+      (0, import_react.createElement)(
         "div",
         { className: "bm-item__title" },
         memory.summary ?? memory.content.slice(0, 80),
@@ -53,7 +79,7 @@ function MemoryRow({ memory, onOpen }) {
         badge(SENSITIVITY_LABELS[memory.sensitivity] ?? memory.sensitivity, "sensitivity"),
         memory.status === "archived" ? badge("\u5DF2\u5F52\u6863", "archived") : null
       ),
-      createElement(
+      (0, import_react.createElement)(
         "div",
         { className: "bm-item__meta" },
         `revision ${memory.revision} \xB7 \u66F4\u65B0 ${memory.updated_at.slice(0, 16).replace("T", " ")}`
@@ -65,21 +91,21 @@ function CandidateRow({
   candidate,
   onDecision
 }) {
-  return createElement(
+  return (0, import_react.createElement)(
     "div",
     { className: "bm-item" },
-    createElement(
+    (0, import_react.createElement)(
       "div",
       { className: "bm-item__title" },
       candidate.summary ?? candidate.content.slice(0, 80),
       badge(KIND_LABELS[candidate.kind] ?? candidate.kind, "kind"),
       badge("\u5019\u9009", "candidate")
     ),
-    createElement("div", { className: "bm-item__meta" }, candidate.policy_reason),
-    createElement(
+    (0, import_react.createElement)("div", { className: "bm-item__meta" }, candidate.policy_reason),
+    (0, import_react.createElement)(
       "div",
       { className: "bm-item__actions" },
-      createElement(
+      (0, import_react.createElement)(
         "button",
         {
           type: "button",
@@ -88,7 +114,7 @@ function CandidateRow({
         },
         "\u63A5\u53D7"
       ),
-      createElement(
+      (0, import_react.createElement)(
         "button",
         {
           type: "button",
@@ -101,12 +127,12 @@ function CandidateRow({
   );
 }
 function MemoryPanel({ onClose }) {
-  const [view, setView] = useState("memories");
-  const [memories, setMemories] = useState([]);
-  const [candidates, setCandidates] = useState([]);
-  const [expanded, setExpanded] = useState(null);
-  const [error, setError] = useState(null);
-  const load = useMemo(
+  const [view, setView] = (0, import_react.useState)("memories");
+  const [memories, setMemories] = (0, import_react.useState)([]);
+  const [candidates, setCandidates] = (0, import_react.useState)([]);
+  const [expanded, setExpanded] = (0, import_react.useState)(null);
+  const [error, setError] = (0, import_react.useState)(null);
+  const load = (0, import_react.useMemo)(
     () => () => {
       setError(null);
       Promise.all([
@@ -125,7 +151,7 @@ function MemoryPanel({ onClose }) {
     },
     []
   );
-  useEffect(() => {
+  (0, import_react.useEffect)(() => {
     load();
   }, [load]);
   function decide(candidateId, accept) {
@@ -134,26 +160,26 @@ function MemoryPanel({ onClose }) {
       setError(cause instanceof Error ? cause.message : String(cause));
     });
   }
-  return createElement(
+  return (0, import_react.createElement)(
     "div",
     { className: "bm-overlay", role: "dialog", "aria-label": "\u5206\u5C42\u8BB0\u5FC6" },
-    createElement(
+    (0, import_react.createElement)(
       "div",
       { className: "bm-panel" },
-      createElement(
+      (0, import_react.createElement)(
         "div",
         { className: "bm-panel__header" },
-        createElement("h2", null, "\u5206\u5C42\u8BB0\u5FC6"),
-        createElement(
+        (0, import_react.createElement)("h2", null, "\u5206\u5C42\u8BB0\u5FC6"),
+        (0, import_react.createElement)(
           "button",
           { type: "button", className: "bm-close", onClick: onClose, "aria-label": "\u5173\u95ED" },
           "\xD7"
         )
       ),
-      createElement(
+      (0, import_react.createElement)(
         "div",
         { className: "bm-tabs" },
-        createElement(
+        (0, import_react.createElement)(
           "button",
           {
             type: "button",
@@ -162,7 +188,7 @@ function MemoryPanel({ onClose }) {
           },
           "\u5DF2\u4FDD\u5B58\u8BB0\u5FC6"
         ),
-        createElement(
+        (0, import_react.createElement)(
           "button",
           {
             type: "button",
@@ -172,51 +198,51 @@ function MemoryPanel({ onClose }) {
           `\u8BB0\u5FC6\u5019\u9009 (${candidates.length})`
         )
       ),
-      error ? createElement("div", { className: "bm-error" }, error) : null,
-      view === "memories" ? createElement(
+      error ? (0, import_react.createElement)("div", { className: "bm-error" }, error) : null,
+      view === "memories" ? (0, import_react.createElement)(
         "div",
         { className: "bm-list" },
-        memories.length === 0 ? createElement("p", { className: "bm-empty" }, "\u5C1A\u672A\u8BFB\u53D6\u8BB0\u5FC6\u3002") : memories.map(
-          (memory) => createElement(MemoryRow, {
+        memories.length === 0 ? (0, import_react.createElement)("p", { className: "bm-empty" }, "\u5C1A\u672A\u8BFB\u53D6\u8BB0\u5FC6\u3002") : memories.map(
+          (memory) => (0, import_react.createElement)(MemoryRow, {
             key: memory.memory_id,
             memory,
             onOpen: () => setExpanded(memory)
           })
         ),
-        expanded ? createElement(
+        expanded ? (0, import_react.createElement)(
           "div",
           { className: "bm-detail" },
-          createElement("p", null, expanded.content),
-          createElement(
+          (0, import_react.createElement)("p", null, expanded.content),
+          (0, import_react.createElement)(
             "button",
             { type: "button", className: "bm-action", onClick: () => setExpanded(null) },
             "\u6536\u8D77"
           )
         ) : null
-      ) : createElement(
+      ) : (0, import_react.createElement)(
         "div",
         { className: "bm-list" },
-        candidates.length === 0 ? createElement(
+        candidates.length === 0 ? (0, import_react.createElement)(
           "p",
           { className: "bm-empty" },
           "\u6CA1\u6709\u5F85\u51B3\u5B9A\u7684\u5019\u9009\u3002\u63A8\u65AD\u4E8B\u5B9E\u4E0D\u4F1A\u9759\u9ED8\u6210\u4E3A\u957F\u671F\u8BB0\u5FC6\u3002"
         ) : candidates.map(
-          (candidate) => createElement(CandidateRow, {
+          (candidate) => (0, import_react.createElement)(CandidateRow, {
             key: candidate.candidate_id,
             candidate,
             onDecision: decide
           })
         )
       ),
-      createElement(
+      (0, import_react.createElement)(
         "div",
         { className: "bm-footer" },
-        createElement(
+        (0, import_react.createElement)(
           "button",
           { type: "button", className: "bm-action", onClick: load },
           "\u5237\u65B0"
         ),
-        createElement("span", { className: "bm-note" }, "\u6570\u636E\u6765\u81EA\u672C\u5730 Butler \u8BB0\u5FC6\u670D\u52A1")
+        (0, import_react.createElement)("span", { className: "bm-note" }, "\u6570\u636E\u6765\u81EA\u672C\u5730 Butler \u8BB0\u5FC6\u670D\u52A1")
       )
     )
   );
@@ -226,11 +252,11 @@ function MemoryPanel({ onClose }) {
 var name = "dsh-butler-memory-panel";
 var inject = ["connection", "slots"];
 function MemoryButton() {
-  const [open, setOpen] = useState2(false);
-  return createElement2(
+  const [open, setOpen] = (0, import_react2.useState)(false);
+  return (0, import_react2.createElement)(
     "span",
     null,
-    createElement2(
+    (0, import_react2.createElement)(
       "button",
       {
         type: "button",
@@ -239,16 +265,23 @@ function MemoryButton() {
       },
       "\u8BB0\u5FC6"
     ),
-    open ? createElement2(MemoryPanel, { onClose: () => setOpen(false) }) : null
+    open ? (0, import_react2.createElement)(MemoryPanel, { onClose: () => setOpen(false) }) : null
   );
 }
 function apply(ctx) {
   setRpc(ctx.connection.rpc);
   installStyles();
-  ctx.slots.register("conversation.session.header.actions", {
-    order: 100,
-    component: MemoryButton
-  });
+  ctx.slots.inject(
+    "conversation.session.header.actions",
+    () => ctx.slots.register(
+      {
+        name: "conversation.session.header.actions",
+        id: "butler-memory",
+        order: 30
+      },
+      MemoryButton
+    )
+  );
 }
 function installStyles() {
   if (typeof document === "undefined" || document.getElementById("bm-memory-styles")) {
@@ -288,8 +321,4 @@ function installStyles() {
   `;
   document.head.append(style);
 }
-export {
-  apply,
-  inject,
-  name
-};
+return module.exports; } });

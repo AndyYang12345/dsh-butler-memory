@@ -2,16 +2,13 @@
  * Browser half: seats a "记忆" button into the session header action row and
  * opens the memory panel dialog.
  *
- * Slot contract (verified in the DSH repo):
- *   'conversation.session.header.actions' — kind 'list', scope 'session',
- *   owner ConversationHeaderActionOwnerProps, rendered by ascending `order`.
- *
- * VERIFY-STEP (first integration): confirm the exact SlotCore.register entry
- * shape ({ component?, order? }) and the `host` service accessor for static
- * client packages with `cordis_inspect_list` / `cordis_inspect_query` before
- * activating. The host.call pairing is official; the injection spelling here
- * is the documented static-plugin form and must be checked against the live
- * catalog.
+ * Slot contract (verified against the DSH runtime): the official
+ * dsh-client-ui-jobs package registers the same
+ * `conversation.session.header.actions` seat with
+ *   ctx.slots.inject(key, () => ctx.slots.register({ name: key, id, order }, Component))
+ * where `name` is the slot key, `id` the entry id, and `order` ranks entries
+ * ascending. The component receives session-standard props; this one ignores
+ * them.
  */
 import { createElement, useState } from 'react'
 import type { Context } from '@deepseek-ai/cordis'
@@ -43,10 +40,16 @@ function MemoryButton() {
 export function apply(ctx: Context) {
   setRpc(ctx.connection.rpc)
   installStyles()
-  ctx.slots.register('conversation.session.header.actions', {
-    order: 100,
-    component: MemoryButton,
-  })
+  ctx.slots.inject('conversation.session.header.actions', () =>
+    ctx.slots.register(
+      {
+        name: 'conversation.session.header.actions',
+        id: 'butler-memory',
+        order: 30,
+      },
+      MemoryButton,
+    ),
+  )
 }
 
 /** Minimal self-contained styles; no CDN, no build-time CSS pipeline. */
