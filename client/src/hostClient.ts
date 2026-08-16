@@ -1,21 +1,30 @@
 /**
- * Shared handle to the package-private client→host RPC, set once during
- * apply(). Separated from the panel so the component never holds Context.
- *
- * VERIFY-STEP: confirm the `host` service accessor (`ctx.host.call`) for
- * static client packages against the live catalog.
+ * Shared handle to the generic client→host Connection RPC, set once during
+ * apply(). The browser half calls the host-registered channel
+ * `/butler-memory` and unwraps the RpcResult envelope.
  */
-type HostCall = (method: string, args?: unknown) => Promise<unknown>
-
-let callHost: HostCall | null = null
-
-export function setHostCall(host: { call: HostCall }) {
-  callHost = host.call.bind(host)
+interface RpcCaller {
+  call(
+    channel: string,
+    endpoint: string,
+    payload?: unknown,
+    signal?: AbortSignal,
+  ): Promise<{ ok: boolean; value?: unknown; error?: { message: string } }>
 }
 
-export function hostCall(method: string, args?: unknown): Promise<unknown> {
-  if (callHost === null) {
-    throw new Error('dsh-butler-memory: host RPC is not available')
+let rpc: RpcCaller | null = null
+
+export function setRpc(caller: RpcCaller) {
+  rpc = caller
+}
+
+export async function hostCall(endpoint: string, payload?: unknown): Promise<unknown> {
+  if (rpc === null) {
+    throw new Error('dsh-butler-memory: connection RPC is not available')
   }
-  return callHost(method, args)
+  const result = await rpc.call('/butler-memory', endpoint, payload ?? {})
+  if (!result.ok) {
+    throw new Error(result.error?.message ?? 'butler-memory RPC failed')
+  }
+  return result.value
 }

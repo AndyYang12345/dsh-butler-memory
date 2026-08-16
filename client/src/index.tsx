@@ -16,11 +16,11 @@
 import { createElement, useState } from 'react'
 import type { Context } from '@deepseek-ai/cordis'
 import { MemoryPanel } from './MemoryPanel'
-import { setHostCall } from './hostClient'
+import { setRpc } from './hostClient'
 
 export const name = 'dsh-butler-memory-panel'
 
-export const inject = ['host', 'slots']
+export const inject = ['connection', 'slots']
 
 function MemoryButton() {
   const [open, setOpen] = useState(false)
@@ -41,7 +41,7 @@ function MemoryButton() {
 }
 
 export function apply(ctx: Context) {
-  setHostCall(ctx.host)
+  setRpc(ctx.connection.rpc)
   installStyles()
   ctx.slots.register('conversation.session.header.actions', {
     order: 100,

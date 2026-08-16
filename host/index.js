@@ -1,19 +1,21 @@
 /**
  * Host half of the dsh-butler-memory plugin.
  *
- * Registers package-private RPC endpoints (harness.handle) that proxy the
- * loopback panel API of the `butler-memory-mcp` bridge. The browser half
- * calls them through host.call(method, args) — verified pairing from the
- * DSH client runner: "register a handler there with harness.handle(method,
- * fn) and call it here via host.call(method, args)".
+ * Registers a logical RPC channel (ctx.connection.rpc.handle) that proxies
+ * the loopback panel API of `butler-memory-mcp` for the browser half, which
+ * calls it through ctx.connection.rpc.call(channel, endpoint, payload).
+ * Verified against the DSH connection contract (HostConnectionRpc /
+ * ClientConnectionRpc in @deepseek-ai/dsh-client-connection): channels are
+ * absolute names, handlers return the RpcResult envelope, and `authority`
+ * picks the trust fence — `loopback` matches the panel API's own binding.
  *
- * VERIFY-STEP (first integration): run `cordis_inspect_list` in a DSH agent
- * and confirm the `harness` service inject name and `handle(method, fn)`
- * signature on this exact DSH version before relying on it.
+ * The plugin is deliberately OPTIONAL: it declares no inject, so profiles
+ * without the web stack (headless) still boot; the MCP tool row works
+ * independently.
  */
 export const name = 'dsh-butler-memory'
 
-export const inject = ['harness']
+export const inject = []
 
 const PANEL_URL = () =>
   process.env.BUTLER_MEMORY_PANEL_URL ?? 'http://127.0.0.1:8771'
@@ -31,7 +33,9 @@ async function panelRequest(path, { method = 'GET', body } = {}) {
     } catch {
       /* keep the status line */
     }
-    throw new Error(`butler memory panel ${response.status}: ${detail || response.statusText}`)
+    throw new Error(
+      `butler memory panel ${response.status}: ${detail || response.statusText}`,
+    )
   }
   return response.json()
 }
@@ -45,32 +49,61 @@ function queryString(params) {
   return text ? `?${text}` : ''
 }
 
+const ENDPOINTS = {
+  'memory/list': (payload = {}) =>
+    panelRequest(`/v1/memories${queryString(payload)}`),
+  'memory/search': (payload = {}) =>
+    panelRequest(`/v1/memories/search${queryString(payload)}`),
+  'memory/revisions': (payload = {}) =>
+    panelRequest(`/v1/memories/${payload.memoryId}/revisions`),
+  'memory/candidates': (payload = {}) =>
+    panelRequest(`/v1/memory-candidates${queryString(payload)}`),
+  'memory/candidates/accept': (payload = {}) =>
+    panelRequest(`/v1/memory-candidates/${payload.candidateId}/accept`, {
+      method: 'POST',
+    }),
+  'memory/candidates/reject': (payload = {}) =>
+    panelRequest(`/v1/memory-candidates/${payload.candidateId}/reject`, {
+      method: 'POST',
+    }),
+}
+
 export function apply(ctx) {
-  ctx.harness.handle('butler-memory.list', (args = {}) =>
-    panelRequest(`/v1/memories${queryString(args)}`),
-  )
-
-  ctx.harness.handle('butler-memory.search', (args = {}) =>
-    panelRequest(`/v1/memories/search${queryString(args)}`),
-  )
-
-  ctx.harness.handle('butler-memory.revisions', (args = {}) =>
-    panelRequest(`/v1/memories/${args.memoryId}/revisions`),
-  )
-
-  ctx.harness.handle('butler-memory.candidates', (args = {}) =>
-    panelRequest(`/v1/memory-candidates${queryString(args)}`),
-  )
-
-  ctx.harness.handle('butler-memory.acceptCandidate', (args = {}) =>
-    panelRequest(`/v1/memory-candidates/${args.candidateId}/accept`, {
-      method: 'POST',
-    }),
-  )
-
-  ctx.harness.handle('butler-memory.rejectCandidate', (args = {}) =>
-    panelRequest(`/v1/memory-candidates/${args.candidateId}/reject`, {
-      method: 'POST',
-    }),
+  let connection
+  try {
+    connection = ctx.get('connection')
+  } catch {
+    connection = undefined
+  }
+  if (connection === undefined || connection.rpc === undefined) {
+    // Headless / non-web profiles: the panel bridge is simply absent.
+    return
+  }
+  connection.rpc.handle(
+    '/butler-memory',
+    async (endpoint, payload) => {
+      const handler = ENDPOINTS[endpoint]
+      if (handler === undefined) {
+        return {
+          ok: false,
+          error: {
+            code: 'internal',
+            message: `unknown butler-memory endpoint: ${endpoint}`,
+            details: {},
+          },
+        }
+      }
+      try {
+        return { ok: true, value: await handler(payload ?? {}) }
+      } catch (cause) {
+        const message =
+          cause instanceof Error ? cause.message : String(cause ?? 'panel error')
+        return {
+          ok: false,
+          error: { code: 'internal', message, details: {} },
+        }
+      }
+    },
+    { authority: 'loopback' },
   )
 }

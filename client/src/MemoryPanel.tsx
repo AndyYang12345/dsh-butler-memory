@@ -132,10 +132,10 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
     () => () => {
       setError(null)
       Promise.all([
-        hostCall('butler-memory.list', { limit: 50 }).catch((cause) => {
+        hostCall('memory/list', { limit: 50 }).catch((cause) => {
           throw cause
         }),
-        hostCall('butler-memory.candidates', { status: 'pending', limit: 50 }).catch(
+        hostCall('memory/candidates', { status: 'pending', limit: 50 }).catch(
           () => ({ candidates: [] }),
         ),
       ])
@@ -155,8 +155,8 @@ export function MemoryPanel({ onClose }: MemoryPanelProps) {
   }, [load])
 
   function decide(candidateId: string, accept: boolean) {
-    const method = accept ? 'butler-memory.acceptCandidate' : 'butler-memory.rejectCandidate'
-    hostCall(method, { candidateId })
+    const endpoint = accept ? 'memory/candidates/accept' : 'memory/candidates/reject'
+    hostCall(endpoint, { candidateId })
       .then(() => load())
       .catch((cause: unknown) => {
         setError(cause instanceof Error ? cause.message : String(cause))
