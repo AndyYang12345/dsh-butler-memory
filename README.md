@@ -1,6 +1,14 @@
 # dsh-butler-memory
 
-DSH 组合包：把 [butler-memory-mcp](../butler-memory-mcp) 的记忆能力接进 DeepSeek
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![DSH](https://img.shields.io/badge/DSH-bundle%20%2B%20client-purple)](https://github.com/deepseek-ai/DeepSeek-Harness)
+
+> **DeepSeek Harness 的长期记忆：agent 能用，你也能看见。** 一个组合包同时打通
+> 两条通道：模型获得 `mcp__butler__memory_*` 工具；Web 会话头部出现"记忆"按钮，
+> 面板可查看记忆、敏感度徽章、修订历史与待决候选——写入依然绑定 owner/revision/
+> audit，绝不静默入库。
+
+DSH 组合包：把 [butler-memory-mcp](https://github.com/AndyYang12345/butler-memory-mcp) 的记忆能力接进 DeepSeek
 Harness 的两条通道——
 
 1. **给 agent**：声明一个 `dsh-mcp-client` 实例，spawn `ai-butler-memory-mcp`，
@@ -16,7 +24,7 @@ DSH web 面板 ──host.call──► host 半部 ──HTTP──► butler-m
 
 ## 前置条件
 
-1. 已安装并运行 [butler-memory-mcp](../butler-memory-mcp)（stdio 由 DSH 自动
+1. 已安装并运行 [butler-memory-mcp](https://github.com/AndyYang12345/butler-memory-mcp)（stdio 由 DSH 自动
    spawn；HTTP 面板模式需单独 `--transport http` 运行）；
 2. Node 22+；`dsh` CLI 已安装。
 
@@ -58,3 +66,16 @@ owner/revision/audit 语义。
 - 确认 React 是否由页面提供；否则把 build.mjs 的 `external` 移除自行打包。
 
 详见 [PLAN.md](PLAN.md)。
+
+## License
+
+[Apache License 2.0](LICENSE)，与上游项目一致。本包仅包含接入配置与面板代码，
+不包含任何第三方运行时、模型权重或专有素材。
+
+## 相关项目
+
+- [butler-memory-mcp](https://github.com/AndyYang12345/butler-memory-mcp) —
+  记忆 MCP 服务器（本包的数据源）；
+- `ai-butler-framework` — 记忆领域服务的实现方（上游）；
+- [DSH 官方第三方记忆 MCP 示例](https://github.com/deepseek-ai/DeepSeek-Harness/tree/master/examples/mcp-memory) —
+  本包接入方式的对齐基准。
