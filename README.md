@@ -14,20 +14,31 @@ Harness 的两条通道——
 1. **给 agent**：声明一个 `dsh-mcp-client` 实例，spawn `ai-butler-memory-mcp`，
    模型获得 `mcp__butler__memory_*` 工具；
 2. **给用户**：一个 Web 端"记忆"面板（会话头部按钮 + 对话框），可查看长期
-   记忆、敏感度/类别徽章、推断候选并接受/拒绝——语义移植自
+   记忆、敏感度/类别徽章、修订时间线、推断候选并接受/拒绝——语义移植自
    ai-butler-framework 的 `web/index.html` 记忆面板。
 
 ```text
-DSH agent ──mcp__butler__memory_*──► butler-memory-mcp (stdio MCP)
-DSH web 面板 ──host.call──► host 半部 ──HTTP──► butler-memory-mcp (127.0.0.1:8771)
+DSH agent ──mcp__butler__memory_*──► butler-memory-mcp (stdio, DSH 托管)
+DSH web 面板 ──host.call──► host 半部 ──JSON-RPC──► butler-memory-mcp (stdio, 插件托管)
 ```
+
+**零手动运行**：两条通道都由 DSH/插件自动 spawn 子进程（崩溃后自动重启），
+不需要你手动启动任何服务。
 
 ## 前置条件
 
 1. 已安装 [butler-memory-mcp](https://github.com/AndyYang12345/butler-memory-mcp)
-   （`pip install butler-memory-mcp`；stdio 由 DSH 自动 spawn，HTTP 面板模式需
-   单独 `--transport http` 运行，默认 `127.0.0.1:8771`）；
-2. Node 22+；`dsh` CLI 已安装。
+   （`pip install butler-memory-mcp`，确保 `ai-butler-memory-mcp` 在 PATH 上）；
+2. 已按 butler-memory-mcp README 配置 `~/.config/butler-memory-mcp/.env`
+   （数据库与桥设备凭据）；
+3. Node 22+；`dsh` CLI 已安装。
+
+### 可选环境变量
+
+| 变量 | 默认 | 作用 |
+|---|---|---|
+| `AI_BUTLER_MEMORY_MCP_COMMAND` | `ai-butler-memory-mcp` | 面板桥的启动命令（PATH 上找不到时给绝对路径） |
+| `BUTLER_MEMORY_PANEL_URL` | 未设置（stdio 模式） | 设置后回退到旧式 HTTP 面板模式，指向自管的 `--transport http` 实例 |
 
 ## 安装
 
@@ -37,9 +48,10 @@ DSH web 面板 ──host.call──► host 半部 ──HTTP──► butler-m
 dsh plugin add dsh-butler-memory
 ```
 
-安装时 postinstall 会把 `butler-memory` skill 复制到
-`$DSH_HOME/skills/butler-memory/`，DSH 的文件系统 skill 提供方会在所有
-profile 中发现它；也可手动执行 `npm run install-skill` 重装。
+插件**激活时自动**把 `butler-memory` skill 复制到
+`$DSH_HOME/skills/butler-memory/`（幂等，崩溃不影响），DSH 的文件系统
+skill 提供方会在所有 profile 中发现它；也可手动执行
+`npm run install-skill` 重装。
 
 ### 本地开发（源码 checkout）
 
