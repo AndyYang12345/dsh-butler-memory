@@ -14,7 +14,8 @@ Harness 的两条通道——
 1. **给 agent**：声明一个 `dsh-mcp-client` 实例，spawn `ai-butler-memory-mcp`，
    模型获得 `mcp__butler__memory_*` 工具；
 2. **给用户**：一个 Web 端"记忆"面板（会话头部按钮 + 对话框），可查看长期
-   记忆、敏感度/类别徽章、修订时间线、推断候选并接受/拒绝——语义移植自
+   记忆、敏感度/类别徽章、修订时间线、推断候选并接受/拒绝，含**服务健康
+   状态**与离线时的**分步安装指引**——语义移植自
    ai-butler-framework 的 `web/index.html` 记忆面板。
 
 ```text
@@ -25,12 +26,17 @@ DSH web 面板 ──host.call──► host 半部 ──JSON-RPC──► butl
 **零手动运行**：两条通道都由 DSH/插件自动 spawn 子进程（崩溃后自动重启），
 不需要你手动启动任何服务。
 
+**优雅降级**：记忆桥缺失或未配置时（未装 pip 包、env 未配、数据库不可达），
+`dsh web` 照常启动、普通对话不受影响——记忆工具暂时缺席，面板显示离线
+状态与安装指引，修复后即恢复。
+
 ## 前置条件
 
 1. 已安装 [butler-memory-mcp](https://github.com/AndyYang12345/butler-memory-mcp)
    （`pip install butler-memory-mcp`，确保 `ai-butler-memory-mcp` 在 PATH 上）；
 2. 已按 butler-memory-mcp README 配置 `~/.config/butler-memory-mcp/.env`
-   （数据库与桥设备凭据）；
+   （数据库与桥设备凭据）。新机器/无数据库时一条命令完成全部初始化：
+   `ai-butler-memory-mcp setup-docker`（需 Docker Desktop）；
 3. Node 22+；`dsh` CLI 已安装。
 
 ### 可选环境变量
@@ -84,11 +90,16 @@ profile 的 `cordis.patch.yml` 整行覆盖（如换端口、换命令）。patc
 butler 的"用户可看、可审、可撤销"面板带到 DSH，且写入依然绑定框架的
 owner/revision/audit 语义。
 
-## 待办（首次集成时逐项核验）
+## 兼容性验证记录（dsh 0.1.0-rc.6 实测）
 
-- `cordis_inspect_list` 确认 `harness.handle` 签名与 `host` 注入名（host/index.js）；
-- 确认 SlotCore.register 条目形状与 `host.call` 静态包访问方式（client/src/*）；
-- 确认 React 是否由页面提供；否则把 build.mjs 的 `external` 移除自行打包。
+- `ctx.inject(['connection'])` + `ctx.connection.rpc.handle` 静态插件 RPC
+  契约（对齐官方 dsh-api-gateway 用法）；
+- Slot 注册：`ctx.slots.inject(key, () => ctx.slots.register({name, id,
+  order}, Component))`，与官方 dsh-client-ui-jobs 同槽位实测；
+- 客户端 bundle 采用模块表契约（`__ModuleLoader__` + CJS 工厂，React 由
+  页面提供）；
+- MCP 协议 2025-11-25 握手、headless agent 工具调用、面板 RPC 通道、
+  桥崩溃自动重启均已在真实实例验证。
 
 详见 [PLAN.md](PLAN.md)。
 
