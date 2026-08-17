@@ -4,9 +4,13 @@
 #    spawns the Butler Memory MCP bridge and exposes its tools to the model
 #    as mcp__butler__memory_*. Install the bridge first:
 #      pip install butler-memory-mcp   (or editable from source)
-# 2) butler-memory-panel: this package's own host plugin, which (a) registers
-#    harness.handle endpoints that proxy the panel HTTP API for the browser
-#    half, and (b) ships the client bundle via the `dsh.client` manifest.
+#    failOnStartupError stays at the dsh default (false): a missing or
+#    misconfigured bridge must NEVER prevent dsh itself from booting —
+#    the memory tools are simply absent until fixed, and the panel shows
+#    the offline state with a setup guide.
+# 2) butler-memory-panel: this package's own host plugin, which (a) spawns
+#    and supervises a stdio bridge for the panel RPC channel, and (b) ships
+#    the client bundle via the `dsh.client` manifest.
 - insert:
     - id: mcp-butler-memory
       name: '@deepseek-ai/dsh-mcp-client'
@@ -15,7 +19,6 @@
         transport: stdio
         command: ai-butler-memory-mcp
         args: [--transport, stdio]
-        failOnStartupError: true
 
     - id: butler-memory-panel
       name: dsh-butler-memory
