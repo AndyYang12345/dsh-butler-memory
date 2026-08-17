@@ -1,6 +1,6 @@
 {
   "name": "dsh-butler-memory",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "DSH bundle: wire the Butler Memory MCP server (agent tools) and add a Web memory panel (view/search/candidates)",
   "license": "Apache-2.0",
   "type": "module",

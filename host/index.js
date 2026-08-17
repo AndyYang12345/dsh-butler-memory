@@ -295,14 +295,16 @@ function stdioEndpoints(bridge) {
     },
     'memory/list': (payload = {}) => bridge.call('memory_list', payload),
     'memory/search': (payload = {}) => bridge.call('memory_search', payload),
+    // The panel speaks camelCase (memoryId, candidateId) while the MCP
+    // tools take snake_case (memory_id, candidate_id): map explicitly.
     'memory/revisions': (payload = {}) =>
-      bridge.call('memory_revisions', payload),
+      bridge.call('memory_revisions', { memory_id: payload.memoryId }),
     'memory/candidates': (payload = {}) =>
       bridge.call('memory_candidates', payload),
     'memory/candidates/accept': (payload = {}) =>
-      bridge.call('memory_candidate_accept', payload),
+      bridge.call('memory_candidate_accept', { candidate_id: payload.candidateId }),
     'memory/candidates/reject': (payload = {}) =>
-      bridge.call('memory_candidate_reject', payload),
+      bridge.call('memory_candidate_reject', { candidate_id: payload.candidateId }),
   }
 }
 
