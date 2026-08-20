@@ -1,6 +1,6 @@
 {
   "name": "dsh-butler-memory",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "DSH bundle: wire the Butler Memory MCP server (agent tools) and add a Web memory panel (view/search/candidates)",
   "license": "Apache-2.0",
   "type": "module",
@@ -44,5 +44,9 @@
   },
   "devDependencies": {
     "esbuild": "^0.25.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndyYang12345/dsh-butler-memory.git"
   }
 }
